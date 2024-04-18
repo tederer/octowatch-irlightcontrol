@@ -1,0 +1,4 @@
+Name: libpigpio
+Description: a C library for the Raspberry which allows control of the GPIO
+Version: 1.0
+Libs: -L/lib -lpigpio
