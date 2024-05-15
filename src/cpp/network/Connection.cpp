@@ -16,6 +16,10 @@ void Connection::asyncSend(void *mem, size_t size) {
    tcpConnection->asyncSend(mem, size);
 }
 
+void Connection::asyncSendAndFree(void *mem, size_t size) {
+   tcpConnection->asyncSendAndFree(mem, size);
+}
+
 bool Connection::outputBufferEmpty() const {
    return tcpConnection->outputBufferEmpty();
 }

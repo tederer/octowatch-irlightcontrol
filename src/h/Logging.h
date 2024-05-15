@@ -34,9 +34,7 @@ namespace logging {
    
    class Logger {
       public:   
-         static std::unique_ptr<Logger> create(const char* name) {
-            return std::unique_ptr<Logger>(new Logger(name));
-         }
+         Logger(const char* name) : name(name) {} 
 
          template<typename... Tail> void debug(Tail... tail) {
              log(DEBUG, tail...);
@@ -55,8 +53,6 @@ namespace logging {
          }
                 
       private:
-         Logger(const char* name) : name(name) {} 
-
          std::string timestamp() {
             auto now       = std::chrono::system_clock::now();
             uint64_t value = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();

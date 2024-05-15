@@ -10,8 +10,8 @@ using network::TcpServer;
 using logging::Logger;
 
 std::unique_ptr<TcpConnection> TcpConnection::create(
-   boost::asio::io_context& ioContext, std::shared_ptr<Logger> logger) {
-   return std::unique_ptr<TcpConnection>(new TcpConnection(ioContext, logger));
+   boost::asio::io_context& ioContext, Logger& log) {
+   return std::unique_ptr<TcpConnection>(new TcpConnection(ioContext, log));
 }
 
 boost::asio::ip::tcp::socket& TcpConnection::getSocket() {
@@ -25,12 +25,12 @@ void TcpConnection::start( std::function<void()> connectionClosedCallback,
    readNextLine();
 }
 
-TcpConnection::TcpConnection( boost::asio::io_context& ioContext,
-                              std::shared_ptr<Logger> logger) 
-   :  socket(ioContext), 
-      logger(logger), 
+TcpConnection::TcpConnection( boost::asio::io_context& ioContext, Logger& log) 
+   :  log(log), 
       pendingOutputByteCount(0), 
       aborted(false),
+      socket(ioContext),
+      readBuffer(),      
       writeBuffer(boost::asio::const_buffer())
       {}
 
@@ -63,7 +63,7 @@ void TcpConnection::sendQueuedData() {
       byteCountToSend = writeBuffer.size();
       pendingOutputByteCount += byteCountToSend;
    }
-   logger->debug("enqueuing", byteCountToSend, "bytes for sending -> pending byte count:", pendingOutputByteCount);
+   log.debug("enqueuing", byteCountToSend, "bytes for sending -> pending byte count:", pendingOutputByteCount);
    boost::asio::async_write(socket, writeBuffer, std::bind(&TcpConnection::onWriteComplete, 
          this, std::placeholders::_1, std::placeholders::_2));
 }
@@ -87,6 +87,14 @@ void TcpConnection::asyncSend(const std::string& message) {
 }   
 
 void TcpConnection::asyncSend(void *mem, size_t size) {
+   void* dataCopy = std::malloc(size);
+   std::memcpy(dataCopy, mem, size);
+   
+   auto buffer = boost::asio::const_buffer(std::move(boost::asio::buffer(dataCopy, size)));
+   send(buffer);
+}
+
+void TcpConnection::asyncSendAndFree(void *mem, size_t size) {
    auto buffer = boost::asio::const_buffer(std::move(boost::asio::buffer(mem, size)));
    send(buffer);
 }
@@ -104,7 +112,7 @@ void TcpConnection::close() {
 void TcpConnection::onWriteComplete(const boost::system::error_code& error, 
                                     size_t bytes_transferred) {
    if (error) {
-      logger->error("failed to write:", error.message());
+      log.error("failed to write:", error.message());
       close();
    }
    
@@ -116,7 +124,7 @@ void TcpConnection::onWriteComplete(const boost::system::error_code& error,
       allBytesSent           = pendingOutputByteCount == 0;
    }
    
-   logger->debug("bytes transferred:", bytes_transferred, ", pending bytes:", pendingOutputByteCount);
+   log.debug("bytes transferred:", bytes_transferred, ", pending bytes:", pendingOutputByteCount);
    
    if (allBytesSent) {
       sendQueuedData();
@@ -124,7 +132,7 @@ void TcpConnection::onWriteComplete(const boost::system::error_code& error,
 }
 
 void TcpConnection::readNextLine() {
-   logger->debug("starting to read next line");
+   log.debug("starting to read next line");
    boost::asio::async_read_until(socket, readBuffer, "\n",
       std::bind(&TcpConnection::onReadLineComplete, this, 
                   std::placeholders::_1, std::placeholders::_2));
@@ -133,13 +141,13 @@ void TcpConnection::readNextLine() {
 void TcpConnection::onReadLineComplete(const boost::system::error_code& error, 
                                        size_t bytes_transferred) {
    if (error == boost::asio::error::operation_aborted) {
-      logger->info("operation aborted");
+      log.info("operation aborted");
       aborted = true;
       return;
    }
    
    if (error) {
-      logger->error("failed to read:", error.message());
+      log.error("failed to read:", error.message());
       close();
    } else {
       std::istream is(&readBuffer);
@@ -147,7 +155,7 @@ void TcpConnection::onReadLineComplete(const boost::system::error_code& error,
       is.read(line, bytes_transferred);
       line[bytes_transferred - 1] = 0x00;
       std::string command = line;
-      logger->debug("received", bytes_transferred,"bytes:", command);
+      log.debug("received", bytes_transferred,"bytes:", command);
       commandConsumer(command);
       readNextLine();
    }

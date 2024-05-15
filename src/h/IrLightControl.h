@@ -20,10 +20,14 @@ namespace irlightcontrol {
       public:
          IrLightControl();
          
+         ~IrLightControl();
+         
          /**
           * Starts listening for incoming TCP connections.
           */
          void start();
+         
+         void stop();
          
          // callbacks of the listener interface of the TcpServer
          void onNewConnection(std::unique_ptr<network::Connection> connection) override;
@@ -35,10 +39,10 @@ namespace irlightcontrol {
       private:
          void setDutycycle(int dutycycle);
          
-         std::shared_ptr<logging::Logger> logger;
-         std::unique_ptr<network::TcpServer> tcpServer;
+         logging::Logger                      log;
+         std::unique_ptr<network::TcpServer>  tcpServer;
          std::unique_ptr<network::Connection> connection;
-         int maxDutyCycleValue;
+         int                                  maxDutyCycleValue;
    };
 }
 #endif

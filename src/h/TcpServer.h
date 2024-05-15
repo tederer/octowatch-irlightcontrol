@@ -15,7 +15,7 @@ namespace network {
    class TcpConnection {
       public:
          static std::unique_ptr<TcpConnection> create(boost::asio::io_context& io_context, 
-                                                      std::shared_ptr<logging::Logger> logger);
+                                                      logging::Logger& log);
 
          ~TcpConnection();
          
@@ -31,16 +31,21 @@ namespace network {
          void asyncSend(const std::string& message);
          
          /**
-          * The provided memory gets freed as soon as it got sent. Don't free it
-          * in the calling thread!
+          * The provided memory can get freed as soon as asyncSend returned.
+          * Internally a copy of mem gets created for async processing.
           **/
          void asyncSend(void *mem, size_t size);
+         
+         /**
+          * The provided memory gets freed by this method after sending.
+          * No internal copy gets used.
+          **/
+         void asyncSendAndFree(void *mem, size_t size);
          
          bool outputBufferEmpty();
          
       private:
-         TcpConnection( boost::asio::io_context& io_context, 
-                        std::shared_ptr<logging::Logger> logger);
+         TcpConnection( boost::asio::io_context& io_context, logging::Logger& log);
 
          void readNextLine();
          
@@ -54,16 +59,16 @@ namespace network {
          
          void onReadLineComplete(const boost::system::error_code& error, size_t bytes_transferred);
 
-         boost::asio::ip::tcp::socket socket;
-         std::shared_ptr<logging::Logger> logger;
-         boost::asio::streambuf readBuffer;
-         std::function<void()> connectionClosedCallback;
-         std::function<void(std::string&)> commandConsumer;
-         std::queue<boost::asio::const_buffer> sendQueue;
-         std::mutex mutex;
-         size_t pendingOutputByteCount;
-         bool aborted;
-         boost::asio::const_buffer writeBuffer;
+         logging::Logger&                       log;
+         size_t                                 pendingOutputByteCount;
+         bool                                   aborted;
+         boost::asio::ip::tcp::socket           socket;
+         boost::asio::streambuf                 readBuffer;
+         boost::asio::const_buffer              writeBuffer;
+         std::function<void()>                  connectionClosedCallback;
+         std::function<void(std::string&)>      commandConsumer;
+         std::queue<boost::asio::const_buffer>  sendQueue;
+         std::mutex                             mutex;
    };
 
    class Connection {
@@ -73,6 +78,8 @@ namespace network {
          void asyncSend(const std::string& message);
 
          void asyncSend(void *mem, size_t size);
+         
+         void asyncSendAndFree(void *mem, size_t size);
          
          bool outputBufferEmpty() const;
          
@@ -105,14 +112,13 @@ namespace network {
          void handle_accept(std::unique_ptr<TcpConnection> newConnection, 
                               const boost::system::error_code& error);
 
-         std::string name;
-         unsigned int port;
-         std::unique_ptr<boost::asio::io_context> ioContext;
+         logging::Logger                                 log;
+         unsigned int                                    port;
+         bool                                            stopped;
+         Listener&                                       listener;
+         std::unique_ptr<boost::asio::io_context>        ioContext;
          std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor;
-         Listener& listener;
-         std::unique_ptr<std::thread> thread;
-         std::shared_ptr<logging::Logger> logger;
-         bool stopped;
+         std::unique_ptr<std::thread>                    thread;
    };
 }
 #endif
