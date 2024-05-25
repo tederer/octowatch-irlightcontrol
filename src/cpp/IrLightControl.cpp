@@ -58,8 +58,12 @@ void IrLightControl::start() {
 }
 
 void IrLightControl::stop() {
+   log.info("stopping");
    if(tcpServer) {
       tcpServer->stop();
+   }
+   if (connection) {
+      connection.reset();
    }
 }
    
@@ -70,17 +74,16 @@ void IrLightControl::onNewConnection(std::unique_ptr<Connection> connection) {
 
 void IrLightControl::onConnectionClosed() {
    log.info("connection lost");
-   connection.release();
+   connection.reset();
 }
 
 void IrLightControl::onCommandReceived(const std::string& command) {
    log.info("received command:", command);
    
    try {
-      const char* start = command.c_str();
-      char*       end   = NULL;
-
-      float percent = strtof(start, &end);
+      const char* start   = command.c_str();
+      char*       end     = NULL;
+      float       percent = strtof(start, &end);
 
       if ((percent == 0) && (end == start)) {
         log.error("failed to parse command");
