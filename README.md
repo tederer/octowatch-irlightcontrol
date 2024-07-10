@@ -9,10 +9,8 @@ The service provides the ability to dim the infrared LEDs in the underwater came
 
 The following steps describe how to install the monitoring service on your Raspberry Pi.
 
-1. Execute `sudo apt-get update`.
-2. Execute `sudo apt install nodejs npm` to install the JavaScript runtime environment.
-5.  Clone this repository
-6.  Execute `compile.sh`
+1.  Clone this repository
+2.  Execute `compile.sh`
 
 ## Starting the service
 
