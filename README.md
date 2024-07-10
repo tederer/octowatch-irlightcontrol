@@ -12,7 +12,7 @@ The following steps describe how to install the monitoring service on your Raspb
 1. Execute `sudo apt-get update`.
 2. Execute `sudo apt install nodejs npm` to install the JavaScript runtime environment.
 5.  Clone this repository
-6.  Execute `build.sh`
+6.  Execute `compile.sh`
 
 ## Starting the service
 
