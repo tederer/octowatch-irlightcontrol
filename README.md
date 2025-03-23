@@ -3,7 +3,7 @@ This repository contains the source code of the InfraredLight service, which is 
 
 ## Features
 
-The service provides the ability to dim the infrared LEDs in the underwater camera. To change the LEDs brightness, connect to the service on port 8886 and send the new brightness value followed by a new line character. Float values in the range [0,1] are allowed.
+The service provides the ability to dim the infrared LEDs in the underwater camera by using pulse width modulation (PWM).
 
 ## Installation
 
@@ -49,3 +49,7 @@ cd octowatch-irlightcontrol
 ## Starting the service
 
 Execute `start.sh`.
+
+## Infrared Light Control Interface
+
+The interface for controlling the intensity of the infrared LEDs was implemented as a line-based TCP connection, which listens on port 8886. Sending the new intensity in percent (range: 0.0 - 1.0) followed by a carriage return causes the InfraredLight Service to adapt the PWM signal accordingly.
