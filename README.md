@@ -63,7 +63,7 @@ Wants = network-online.target
 [ Service ]
 Type = simple
 User = root
-Group =root
+Group = root
 ExecStart = <user-home>/octowatch-irlightcontrol/start.sh
 
 [ Install ]
