@@ -46,13 +46,13 @@ cd octowatch-irlightcontrol
 ./compile.sh
 ```
 
-## Starting the service maually
+## Starting the service manally
 
 Execute `start.sh` to start the service manually.
 
 ## Starting the service automatically
 
-To enable automatic start at system boot, create a file called `video-service.service` in `/usr/lib/systemd/system` containing the following content (replace `<user-home>` with the corresponding values for your system):
+To enable automatic start at system boot, create a file called `octowatch-irlightcontrol.service` in `/usr/lib/systemd/system` containing the following content (replace `<user-home>` with the corresponding values for your system):
 
 ```
 [ Unit ]
