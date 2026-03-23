@@ -46,9 +46,29 @@ cd octowatch-irlightcontrol
 ./compile.sh
 ```
 
-## Starting the service
+## Starting the service maually
 
-Execute `start.sh`.
+Execute `start.sh` to start the service manually.
+
+## Starting the service automatically
+
+To enable automatic start at system boot, create a file called `video-service.service` in `/usr/lib/systemd/system` containing the following content (replace `<user-home>` with the corresponding values for your system):
+
+```
+[ Unit ]
+Description = OctoWatch Infrared Light Control Service
+After = network-online.target
+Wants = network-online.target
+
+[ Service ]
+Type = simple
+User = root
+Group =root
+ExecStart = <user-home>/octowatch-irlightcontrol/start.sh
+
+[ Install ]
+WantedBy = multi-user.target
+```
 
 ## Infrared Light Control Interface
 
